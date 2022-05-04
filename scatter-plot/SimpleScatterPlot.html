@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<script src="https://d3js.org/d3.v4.js"></script>
+<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+
+<style>
+  body {
+  background-color:rgb(243, 230, 116)   
+  }
+
+    .bubbles {
+    stroke-width: 2px;
+    stroke:black;
+  }
+  .bubbles:hover {
+    stroke: white;
+  }
+  .colour:hover{
+    fill: rgb(77, 159, 221);
+  }
+
+.axis {
+	font: 14px sans-serif;
+  stroke:lightgreen;
+}
+.axis path,
+.axis line {
+  fill: none;
+  stroke: white;
+  stroke-width: 1px;
+  shape-rendering: crispEdges;
+}
+.toolTip {
+  position: absolute;
+  display: none;
+  min-width: 80px;
+  height: auto;
+  background: none repeat scroll 0 0 #dcdf31;
+  border: 1px solid #6F257F;
+  padding: 14px;
+  text-align: left;
+}
+</style>
+<div id="my_dataviz"></div>
+
+<body>
+<script>
+
+  var margin = {top: 10, right: 20, bottom: 30, left: 50},
+      width = 700 - margin.left - margin.right,
+      height = 520 - margin.top - margin.bottom;
+  
+  var svg = d3.select("#my_dataviz")
+    .append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+      .attr("transform",
+            "translate(" + margin.left + "," + margin.top + ")");
+  
+  d3.csv("scottish_hills.csv", function(data) {
+  
+    var x = d3.scaleLinear()
+      minLong = d3.min(data,function(d){return parseFloat(d.Longitude);})
+      maxLong = d3.max(data,function(d){return parseFloat(d.Longitude);})
+      x.domain([minLong, maxLong]).range([0, width]).nice();
+    svg.append("g")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x));
+      
+    var y = d3.scaleLinear()
+      minLat = d3.min(data,function(d){return parseFloat(d.Latitude);})
+      maxLat = d3.max(data,function(d){return parseFloat(d.Latitude);})
+      y.domain([minLat, maxLat]).range([height, 0]).nice();
+    svg.append("g")
+      .call(d3.axisLeft(y));
+ 
+  var z = d3.scaleLinear()
+    .domain([200000, 1310000000])
+    .range([ 4, 40]);
+
+  var myColor = d3.scaleOrdinal()
+    .range(d3.schemeSet2);
+
+  var tooltip = d3.select("#my_dataviz")
+    .append("div")
+      .style("opacity", 0)
+      .attr("class", "tooltip")
+      .style("background-color", "none")
+      .style("border-radius", "5px")
+      .style("padding", "10px")
+      .style("color", "black")
+      .style("text-align","center")
+      .style("position","absolute")
+      .style("min-width","80px")
+      .style("height","auto")
+      .style("border","yellow")
+      .style("background","orange")
+      .style("padding","14px")
+      
+    var showTooltip = function(d) {
+    tooltip
+      .transition()
+      .duration(200)
+    tooltip
+      .style("opacity", 1)
+      .html("Hill name: " + d.HillName + "<br>" + "Latitude:" + d.Latitude + "<br>" + "Longitude:" + d.Longitude + "<br>" + "Osgrid:" + d.Osgrid + "<br>" + "Height:" + d.Height)
+      .style("left", (d3.mouse(this)[0]+30) + "px")
+      .style("top", (d3.mouse(this)[1]+30) + "px")
+  }
+  var moveTooltip = function(d) {
+    tooltip
+      .style("left", (d3.mouse(this)[0]+30) + "px")
+      .style("top", (d3.mouse(this)[1]+30) + "px")
+  }
+  var hideTooltip = function(d) {
+    tooltip
+      .transition()
+      .duration(200)
+      .style("opacity", 0)
+  }
+
+  svg.append('g')
+    .selectAll("dot")
+    .data(data)
+    .enter()
+    .append("circle")
+      .attr("class", "bubbles")
+      .attr("cx", function (d) { return x(d.Longitude); } )
+      .attr("cy", function (d) { return y(d.Latitude); } )
+      .attr("r", function (d) { return z(d.Height); } )
+      .style("fill", function (d) { return myColor(d.HillName); } )
+    // -3- Trigger the functions
+    .on("mouseover", showTooltip )
+    .on("mousemove", moveTooltip )
+    .on("mouseleave", hideTooltip )
+
+  });
+
+   </script>
+  </body>
+</html>
